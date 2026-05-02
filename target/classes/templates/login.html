@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Login')}"></head>
+<body>
+<div class="login-page">
+
+  <!-- Hero Panel -->
+  <div class="login-hero">
+    <div class="login-hero-content">
+      <div style="font-size:64px;margin-bottom:16px;">🏗️</div>
+      <h1>Build<span>Right</span></h1>
+      <p>Construction Equipment Rental Management</p>
+      <div class="hero-badges">
+        <span class="hero-badge">🚜 Heavy Machines</span>
+        <span class="hero-badge">🔧 Tools & Equipment</span>
+        <span class="hero-badge">👷 Operators</span>
+        <span class="hero-badge">🚛 Delivery</span>
+      </div>
+      <div style="margin-top:48px;color:rgba(255,255,255,.3);font-size:12px;">
+        <div style="font-weight:700;color:rgba(255,255,255,.5);margin-bottom:8px;">DEMO ACCOUNTS</div>
+        <div>admin / admin123 &nbsp;·&nbsp; manager1 / mgr123</div>
+        <div style="margin-top:4px;">cust1 / cust123 &nbsp;·&nbsp; cust2 / cust456</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Panel -->
+  <div class="login-form-panel">
+    <h2>Welcome Back</h2>
+    <p>Sign in to manage your equipment rentals</p>
+
+    <div class="alert alert-error" th:if="${param.error}">
+      <span>⚠️</span> Invalid username or password.
+    </div>
+    <div class="alert alert-success" th:if="${param.logout}">
+      <span>✅</span> You've been signed out.
+    </div>
+    <div class="alert alert-success" th:if="${param.registered}">
+      <span>✅</span> Account created successfully! Please sign in.
+    </div>
+
+    <form class="login-form" method="post" th:action="@{/login}">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-control" placeholder="Enter your username" autofocus required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" placeholder="Enter your password" required/>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg w-100" style="margin-top:8px;">
+        Sign In →
+      </button>
+    </form>
+
+    <div style="margin-top:16px;text-align:center;font-size:14px;color:var(--text-muted);">
+      New here? <a th:href="@{/register}" style="color:var(--primary);">Create a free account</a>
+    </div>
+
+    <div style="margin-top:24px;color:var(--text-muted);font-size:12px;text-align:center;">
+      BuildRight Equipment Rental System v1.0
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Operators')}"></head>
+<body>
+<div id="overlay" class="overlay"></div>
+<div class="d-flex">
+  <div th:replace="~{fragments/layout :: sidebar('operators')}"></div>
+  <div class="main-wrapper">
+    <div th:replace="~{fragments/layout :: topbar('Operators', 'Machine operators and their assignments')}"></div>
+    <div class="page-content">
+      <div class="alert alert-success" th:if="${success}" th:text="${success}" data-autohide="true"></div>
+      <div class="alert alert-error"   th:if="${error}"   th:text="${error}"   data-autohide="true"></div>
+
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1>Machine Operators</h1>
+          <p th:text="${operators.size()} + ' operators registered'"></p>
+        </div>
+        <a th:href="@{/operators/new}" class="btn btn-primary">➕ Add Operator</a>
+      </div>
+
+      <div class="card">
+        <div th:if="${operators.empty}" class="empty-state">
+          <div class="empty-icon">👷</div>
+          <h3>No Operators Yet</h3>
+          <p>Add your first machine operator.</p>
+        </div>
+        <div class="table-wrapper" th:if="${!operators.empty}">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Name</th><th>Specialization</th>
+                <th>Daily Rate</th><th>Status</th><th>Current Job</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="op : ${operators}">
+                <td class="text-muted fs-sm" th:text="${op.id}"></td>
+                <td class="fw-bold" th:text="${op.name}"></td>
+                <td><span class="badge badge-info" th:text="${op.specialization}"></span></td>
+                <td>
+                  <span class="fw-bold text-primary"
+                        th:text="'₱' + ${#numbers.formatDecimal(op.dailyRate,0,'COMMA',0,'POINT')}"></span>
+                  <small class="text-muted">/day</small>
+                </td>
+                <td>
+                  <span class="badge" th:classappend="${op.workStatusBadgeClass}" th:text="${op.workStatus}"></span>
+                </td>
+                <td class="fs-sm">
+                  <span th:if="${op.assignedRentalId > 0}" th:text="'Rental #' + ${op.assignedRentalId} + ' (' + ${op.assignedRole} + ')'"></span>
+                  <span th:if="${op.assignedRentalId <= 0}" class="text-muted">—</span>
+                </td>
+                <td>
+                  <form th:action="@{/operators/{id}/toggle-availability(id=${op.id})}" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-sm"
+                            th:classappend="${op.available} ? 'btn-warning' : 'btn-success'"
+                            th:text="${op.available} ? 'Set Unavailable' : 'Set Available'"
+                            th:attr="disabled=${op.workStatus == 'ON_DUTY' || op.workStatus == 'JOB_DONE' ? 'disabled' : null}"></button>
+                  </form>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

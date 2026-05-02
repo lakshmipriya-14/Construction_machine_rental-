@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Purchase Receipt — Order #<span th:text="${purchase.id}"></span></title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #F5F0EB; color: #1A1A1A; }
+
+    .print-bar { max-width: 680px; margin: 20px auto 12px; display: flex; gap: 10px; justify-content: flex-end; }
+    .btn { padding: 9px 22px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; text-decoration: none; display: inline-block; }
+    .btn-orange { background: #E65100; color: #fff; }
+    .btn-outline { background: #fff; color: #374151; border: 1.5px solid #D1D5DB; }
+
+    .receipt-wrapper {
+      max-width: 680px; margin: 0 auto 40px; background: #fff;
+      border-radius: 16px; overflow: hidden;
+      box-shadow: 0 2px 32px rgba(230,81,0,.12), 0 1px 8px rgba(0,0,0,.07);
+      border: 1px solid #E8E0D8;
+    }
+
+    .receipt-header { background: #1A1A1A; display: flex; align-items: stretch; }
+    .receipt-header-accent { width: 8px; background: linear-gradient(180deg, #E65100 0%, #FF8C42 100%); flex-shrink: 0; }
+    .receipt-header-body { flex:1; padding: 28px 32px; display: flex; align-items: center; justify-content: space-between; }
+    .receipt-brand { display: flex; align-items: center; gap: 14px; }
+    .receipt-brand-icon { width: 52px; height: 52px; background: #E65100; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+    .receipt-brand-name { color: #fff; }
+    .receipt-brand-name h1 { font-size: 20px; font-weight: 800; }
+    .receipt-brand-name p  { font-size: 12px; color: #9CA3AF; margin-top: 2px; }
+    .receipt-confirmed-badge { background: #16A34A; color: #fff; border-radius: 30px; padding: 6px 18px; font-size: 13px; font-weight: 700; }
+
+    .receipt-strip {
+      background: linear-gradient(90deg, #E65100 0%, #FF6D00 100%);
+      padding: 10px 32px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .receipt-strip span { color: #fff; font-size: 13px; font-weight: 600; }
+
+    .receipt-body { padding: 28px 32px; }
+
+    .receipt-meta {
+      display: flex; justify-content: space-between; gap: 16px;
+      background: #FFF7F3; border: 1px solid #FDDCCC; border-radius: 10px;
+      padding: 16px 20px; margin-bottom: 24px;
+    }
+    .meta-item .label { font-size: 10px; text-transform: uppercase; color: #9CA3AF; font-weight: 700; letter-spacing: .06em; }
+    .meta-item .value { font-size: 16px; font-weight: 800; color: #1A1A1A; margin-top: 4px; }
+    .meta-item .value.orange { color: #E65100; }
+
+    /* Item card */
+    .item-card {
+      display: flex; gap: 16px; align-items: center;
+      background: #FAFAFA; border: 1.5px solid #F3F4F6;
+      border-radius: 12px; padding: 16px; margin-bottom: 22px;
+    }
+    .item-card img { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; flex-shrink: 0; border: 1px solid #E5E7EB; }
+    .item-card .tool-icon { width: 72px; height: 72px; background: #FFF3EC; border: 1.5px solid #FDDCCC; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 36px; flex-shrink: 0; }
+    .item-card .item-name { font-size: 17px; font-weight: 700; }
+    .item-card .item-sub  { font-size: 13px; color: #6B7280; margin-top: 5px; }
+    .item-card .item-price { font-size: 18px; font-weight: 800; color: #E65100; margin-top: 6px; }
+
+    .section { margin-bottom: 20px; }
+    .section-title { font-size: 10px; text-transform: uppercase; font-weight: 700; color: #9CA3AF; letter-spacing: .08em; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1.5px solid #F3F4F6; }
+    .row { display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 14px; }
+    .row .k { color: #6B7280; }
+    .row .v { font-weight: 500; }
+
+    .amount-box { background: #1A1A1A; border-radius: 12px; padding: 20px 22px; margin-bottom: 22px; }
+    .amount-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #D1D5DB; }
+    .amount-row.total { border-top: 1px solid #383838; padding-top: 12px; margin-top: 10px; font-size: 20px; font-weight: 800; color: #fff; }
+    .amount-row.total .right { color: #FF6D00; }
+
+    .divider { border: none; border-top: 1.5px dashed #E5E7EB; margin: 18px 0; }
+
+    .receipt-footer { background: #F9FAFB; border-top: 1px solid #F3F4F6; padding: 18px 32px; text-align: center; font-size: 12px; color: #9CA3AF; line-height: 1.8; }
+    .receipt-footer strong { color: #E65100; }
+
+    @media print {
+      body { background: #fff; }
+      .print-bar { display: none; }
+      .receipt-wrapper { box-shadow: none; border-radius: 0; margin: 0; border: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="print-bar">
+  <button class="btn btn-orange" onclick="window.print()">🖨️ Print Receipt</button>
+  <a class="btn btn-outline" th:href="@{/purchases}">← My Orders</a>
+</div>
+
+<div class="receipt-wrapper">
+
+  <div class="receipt-header">
+    <div class="receipt-header-accent"></div>
+    <div class="receipt-header-body">
+      <div class="receipt-brand">
+        <div class="receipt-brand-icon">🔧</div>
+        <div class="receipt-brand-name">
+          <h1>BuildRight</h1>
+          <p>Tool Shop — Construction Equipment</p>
+        </div>
+      </div>
+      <div class="receipt-confirmed-badge">✅ CONFIRMED</div>
+    </div>
+  </div>
+
+  <div class="receipt-strip">
+    <span>PURCHASE RECEIPT</span>
+    <span th:text="'Order No. ORD-' + ${purchase.id}"></span>
+  </div>
+
+  <div class="receipt-body">
+
+    <div class="receipt-meta">
+      <div class="meta-item">
+        <div class="label">Order No.</div>
+        <div class="value orange" th:text="'ORD-' + ${purchase.id}"></div>
+      </div>
+      <div class="meta-item">
+        <div class="label">Purchase Date</div>
+        <div class="value" th:text="${purchase.paymentDate}"></div>
+      </div>
+      <div class="meta-item">
+        <div class="label">Method</div>
+        <div class="value" th:text="${purchase.paymentMethod}"></div>
+      </div>
+      <div class="meta-item" th:if="${purchase.referenceNo != null and !#strings.isEmpty(purchase.referenceNo)}">
+        <div class="label">Reference</div>
+        <div class="value" style="font-size:13px;" th:text="${purchase.referenceNo}"></div>
+      </div>
+    </div>
+
+    <!-- Tool Item Card -->
+    <div class="item-card">
+      <img th:if="${purchase.itemImageUrl != null and !#strings.isEmpty(purchase.itemImageUrl)}"
+           th:src="${purchase.itemImageUrl}" th:alt="${purchase.itemName}"/>
+      <div class="tool-icon" th:if="${purchase.itemImageUrl == null or #strings.isEmpty(purchase.itemImageUrl)}">🔧</div>
+      <div>
+        <div class="item-name" th:text="${purchase.itemName}"></div>
+        <div class="item-sub" th:text="'Quantity: ' + ${purchase.quantity} + ' unit(s)'"></div>
+        <div class="item-price"
+             th:text="'₱' + ${#numbers.formatDecimal(purchase.totalAmount,0,'COMMA',2,'POINT')}"></div>
+      </div>
+    </div>
+
+    <hr class="divider"/>
+
+    <!-- Customer -->
+    <div class="section">
+      <div class="section-title">👤 Customer Information</div>
+      <div class="row"><span class="k">Name</span><span class="v" th:text="${customer.fullName}"></span></div>
+      <div class="row"><span class="k">Username</span><span class="v" th:text="${customer.username}"></span></div>
+      <div class="row" th:if="${customer.contact != null and !#strings.isEmpty(customer.contact)}">
+        <span class="k">Contact</span><span class="v" th:text="${customer.contact}"></span>
+      </div>
+      <div class="row">
+        <span class="k">Delivery Address</span><span class="v" th:text="${purchase.deliveryAddress}"></span>
+      </div>
+      <div class="row" th:if="${purchase.notes != null and !#strings.isEmpty(purchase.notes)}">
+        <span class="k">Notes</span><span class="v" th:text="${purchase.notes}"></span>
+      </div>
+    </div>
+
+    <hr class="divider"/>
+
+    <!-- Amount — dark card -->
+    <div class="amount-box">
+      <div style="font-size:11px;text-transform:uppercase;color:#9CA3AF;font-weight:700;letter-spacing:.06em;margin-bottom:14px;">💰 Payment Breakdown</div>
+      <div class="amount-row">
+        <span th:text="'Unit Price × ' + ${purchase.quantity}"></span>
+        <span th:text="'₱' + ${#numbers.formatDecimal(purchase.unitPrice * purchase.quantity,0,'COMMA',2,'POINT')}"></span>
+      </div>
+      <div class="amount-row total">
+        <span>TOTAL PAID</span>
+        <span class="right" th:text="'₱' + ${#numbers.formatDecimal(purchase.totalAmount,0,'COMMA',2,'POINT')}"></span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="receipt-footer">
+    <strong>BuildRight Tool Shop</strong><br/>
+    This receipt is your official proof of purchase.<br/>
+    Thank you for shopping with BuildRight! 🔧🏗️
+  </div>
+
+</div>
+</body>
+</html>

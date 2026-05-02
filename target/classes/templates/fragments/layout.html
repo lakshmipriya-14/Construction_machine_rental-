@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title th:text="${title} + ' — BuildRight'">BuildRight</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+
+<!-- ══════════════════════════════════════════════════════════
+     SIDEBAR FRAGMENT
+     ══════════════════════════════════════════════════════════ -->
+<nav id="sidebar" class="sidebar" th:fragment="sidebar(page)">
+
+  <!-- Logo -->
+  <div class="sidebar-logo">
+    <div class="logo-icon">BR</div>
+    <div class="logo-text">
+      <span>BuildRight</span>
+      <span>Equipment Rental</span>
+    </div>
+  </div>
+
+  <!-- Current user -->
+  <div class="sidebar-user" th:if="${currentUser != null}">
+    <div class="user-avatar"
+         th:text="${currentUser.fullName != null ? currentUser.fullName.substring(0,1) : 'U'}">U</div>
+    <div class="user-info">
+      <div class="user-name" th:text="${currentUser.fullName}">User</div>
+      <div class="user-role" th:text="${currentUser.role}">ROLE</div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+
+    <a th:href="@{/dashboard}" class="nav-item" th:classappend="${page=='dashboard'} ? 'active' : ''">
+      <span class="nav-icon">📊</span> Dashboard
+    </a>
+    <a th:href="@{/equipment}" class="nav-item" th:classappend="${page=='equipment'} ? 'active' : ''">
+      <span class="nav-icon">🏗️</span> Equipment
+    </a>
+    <!-- Tool Shop and My Orders: CUSTOMERS only -->
+    <a th:if="${currentUser != null and currentUser.customer}"
+       th:href="@{/shop}" class="nav-item" th:classappend="${page=='shop'} ? 'active' : ''">
+      <span class="nav-icon">🛒</span> Tool Shop
+    </a>
+    <a th:if="${currentUser != null and currentUser.customer}"
+       th:href="@{/purchases}" class="nav-item" th:classappend="${page=='purchases'} ? 'active' : ''">
+      <span class="nav-icon">📦</span> My Orders
+    </a>
+    <a th:href="@{/rentals}" class="nav-item" th:classappend="${page=='rentals'} ? 'active' : ''">
+      <span class="nav-icon">📋</span> Rentals
+    </a>
+    <a th:href="@{/payments}" class="nav-item"
+       th:if="${currentUser != null && currentUser.staff}"
+       th:classappend="${page=='payments'} ? 'active' : ''">
+      <span class="nav-icon">💳</span> Payments
+    </a>
+    <a th:href="@{/rentals/report}" class="nav-item"
+       th:if="${currentUser != null && currentUser.staff}"
+       th:classappend="${page=='report'} ? 'active' : ''">
+      <span class="nav-icon">📊</span> Summary Report
+    </a>
+
+    <div class="nav-section-label" th:if="${currentUser != null && currentUser.staff}">People</div>
+
+    <a th:href="@{/users}" class="nav-item"
+       th:if="${currentUser != null && currentUser.staff}"
+       th:classappend="${page=='users'} ? 'active' : ''">
+      <span class="nav-icon">👥</span> Customers
+    </a>
+    <a th:href="@{/operators}" class="nav-item"
+       th:if="${currentUser != null && currentUser.staff}"
+       th:classappend="${page=='operators'} ? 'active' : ''">
+      <span class="nav-icon">👷</span> Operators
+    </a>
+    <a th:href="@{/agents}" class="nav-item"
+       th:if="${currentUser != null && currentUser.staff}"
+       th:classappend="${page=='agents'} ? 'active' : ''">
+      <span class="nav-icon">🚛</span> Drivers
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <form th:action="@{/logout}" method="post" style="margin:0;padding:0;">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+      <button type="submit" class="signout-btn">
+        <span>🚪</span> Sign Out
+      </button>
+    </form>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════
+     TOPBAR FRAGMENT
+     ══════════════════════════════════════════════════════════ -->
+<header th:fragment="topbar(title, subtitle)">
+  <div class="topbar">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div>
+      <div class="topbar-title" th:text="${title}">Page</div>
+      <div class="topbar-subtitle" th:if="${subtitle}" th:text="${subtitle}"></div>
+    </div>
+    <div class="ml-auto d-flex align-center gap-2">
+      <span class="badge badge-primary" th:if="${currentUser != null}" th:text="${currentUser.role}">ROLE</span>
+    </div>
+  </div>
+</header>
+
+<!-- SCRIPTS FRAGMENT -->
+<th:block th:fragment="scripts">
+  <script th:src="@{/js/app.js}"></script>
+</th:block>
+
+</html>

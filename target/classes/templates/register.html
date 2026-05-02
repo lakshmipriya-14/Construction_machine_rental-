@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Register')}"></head>
+<body>
+<div class="login-page">
+
+  <!-- Hero Panel -->
+  <div class="login-hero">
+    <div class="login-hero-content">
+      <div style="font-size:64px;margin-bottom:16px;">🏗️</div>
+      <h1>Build<span>Right</span></h1>
+      <p>Construction Equipment Rental Management</p>
+      <div class="hero-badges">
+        <span class="hero-badge">🚜 Heavy Machines</span>
+        <span class="hero-badge">🔧 Tools &amp; Equipment</span>
+        <span class="hero-badge">👷 Operators</span>
+        <span class="hero-badge">🚛 Delivery</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Panel -->
+  <div class="login-form-panel" style="overflow-y:auto;">
+    <h2>Create Account</h2>
+    <p>Register to start renting equipment</p>
+
+    <div class="alert alert-error" th:if="${error}" th:text="${error}"></div>
+    <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
+
+    <form class="login-form" method="post" th:action="@{/register}">
+      <div class="form-group">
+        <label class="form-label">Full Name *</label>
+        <input type="text" name="fullName" class="form-control" placeholder="Your full name" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Username *</label>
+        <input type="text" name="username" class="form-control" placeholder="Choose a username" required autofocus/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" placeholder="your@email.com"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contact Number</label>
+        <input type="text" name="contact" class="form-control" placeholder="e.g. 09123456789"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Address</label>
+        <input type="text" name="address" class="form-control" placeholder="Your address"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password * <small class="text-muted">(min 6 characters)</small></label>
+        <input type="password" name="password" class="form-control" placeholder="Choose a password" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm Password *</label>
+        <input type="password" name="confirmPassword" class="form-control" placeholder="Repeat password" required/>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg w-100" style="margin-top:8px;">
+        Create Account →
+      </button>
+    </form>
+
+    <div style="margin-top:20px;text-align:center;font-size:14px;color:var(--text-muted);">
+      Already have an account? <a th:href="@{/login}" style="color:var(--primary);">Sign In</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

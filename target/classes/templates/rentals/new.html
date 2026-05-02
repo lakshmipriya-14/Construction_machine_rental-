@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('New Rental')}"></head>
+<body>
+<div id="overlay" class="overlay"></div>
+<div class="d-flex">
+  <div th:replace="~{fragments/layout :: sidebar('rentals')}"></div>
+  <div class="main-wrapper">
+    <div th:replace="~{fragments/layout :: topbar('New Rental', 'Book equipment for a customer')}"></div>
+    <div class="page-content">
+
+      <div class="alert alert-error" th:if="${error}" th:text="${error}" data-autohide="true"></div>
+
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1>Create New Rental</h1>
+          <p>Fill in the details below. Payment is required before manager approval.</p>
+        </div>
+        <a th:href="@{/rentals}" class="btn btn-secondary">← Back</a>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:24px;align-items:start;">
+
+        <!-- Main Form -->
+        <div class="card">
+          <div class="card-body">
+            <form th:action="@{/rentals/new}" method="post">
+
+              <!-- Customer selector (staff only) -->
+              <div class="form-group" th:if="${currentUser.staff && customers != null}">
+                <label class="form-label">Customer *</label>
+                <select name="customerId" class="form-control" required>
+                  <option value="">Select customer</option>
+                  <option th:each="c : ${customers}" th:value="${c.id}" th:text="${c.fullName + ' (' + c.username + ')'}"></option>
+                </select>
+              </div>
+
+              <!-- Equipment -->
+              <div class="form-group">
+                <label class="form-label">Equipment *</label>
+                <select name="itemId" id="itemId" class="form-control" required>
+                  <option value="">Select equipment</option>
+                  <optgroup label="🏗️ Machines">
+                    <option th:each="item : ${items}"
+                            th:if="${item.machine && item.availableQty > 0}"
+                            th:value="${item.id}"
+                            th:text="${item.name + ' — ₱' + item.dailyRate + '/day (' + item.availableQty + ' avail)'}"
+                            th:data-rate="${item.dailyRate}"
+                            th:data-delfee="${item.deliveryFee}"
+                            th:data-needsop="${item.requiresOperator}"
+                            th:data-deliverable="${item.deliverable}"
+                            th:data-maxqty="${item.availableQty}"></option>
+                  </optgroup>
+                  <optgroup label="🔧 Tools">
+                    <option th:each="item : ${items}"
+                            th:if="${!item.machine && item.availableQty > 0}"
+                            th:value="${item.id}"
+                            th:text="${item.name + ' — ₱' + item.dailyRate + '/day (' + item.availableQty + ' avail)'}"
+                            th:data-rate="${item.dailyRate}"
+                            th:data-delfee="${item.deliveryFee}"
+                            th:data-needsop="${item.requiresOperator}"
+                            th:data-deliverable="${item.deliverable}"
+                            th:data-maxqty="${item.availableQty}"></option>
+                  </optgroup>
+                </select>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Quantity *</label>
+                  <input type="number" name="quantity" id="quantity" class="form-control"
+                         min="1" value="1" required/>
+                </div>
+                <div></div>
+
+                <div class="form-group">
+                  <label class="form-label">Start Date (DD/MM/YYYY) *</label>
+                  <input type="text" name="startDate" id="startDate" class="form-control"
+                         placeholder="DD/MM/YYYY" pattern="\d{2}/\d{2}/\d{4}" required/>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">End Date (DD/MM/YYYY) *</label>
+                  <input type="text" name="endDate" id="endDate" class="form-control"
+                         placeholder="DD/MM/YYYY" pattern="\d{2}/\d{2}/\d{4}" required/>
+                </div>
+              </div>
+
+              <!-- Services -->
+              <div style="margin-bottom:18px;">
+                <label class="form-label">Additional Services</label>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  <label class="form-check">
+                    <input type="checkbox" name="needsOperator" id="needsOperator" value="true"/>
+                    <span>👷 Include machine operator (+operator daily rate)</span>
+                  </label>
+                  <!-- Operator availability info -->
+                  <div id="operatorInfo" style="display:none;margin-left:24px;padding:10px;background:var(--bg-secondary);border-radius:8px;font-size:13px;">
+                    <div style="font-weight:600;margin-bottom:6px;">Available Operators:</div>
+                    <div th:each="op : ${allOperators}" style="margin-bottom:4px;display:flex;align-items:center;gap:8px;">
+                      <span th:if="${op.available}" style="color:var(--success);">●</span>
+                      <span th:if="${!op.available}" style="color:var(--danger);">●</span>
+                      <span th:text="${op.name}"></span>
+                      <span style="color:var(--text-muted);" th:text="'(' + ${op.specialization} + ')'"></span>
+                      <span th:if="${!op.available}" style="color:var(--danger);font-weight:600;"
+                            th:text="'— ' + ${op.workStatus} + ' (Not Available)'"></span>
+                      <span th:if="${op.available}" style="color:var(--success);">— Available</span>
+                    </div>
+                    <div th:if="${#lists.isEmpty(allOperators)}" class="text-muted">No operators registered.</div>
+                  </div>
+
+                  <label class="form-check">
+                    <input type="checkbox" name="needsDelivery" id="needsDelivery" value="true"/>
+                    <span>🚛 Request delivery (+delivery fee)</span>
+                  </label>
+                  <!-- Agent availability info -->
+                  <div id="agentInfo" style="display:none;margin-left:24px;padding:10px;background:var(--bg-secondary);border-radius:8px;font-size:13px;">
+                    <div style="font-weight:600;margin-bottom:6px;">Available Drivers:</div>
+                    <div th:each="ag : ${allAgents}" style="margin-bottom:4px;display:flex;align-items:center;gap:8px;">
+                      <span th:if="${ag.available}" style="color:var(--success);">●</span>
+                      <span th:if="${!ag.available}" style="color:var(--danger);">●</span>
+                      <span th:text="${ag.name}"></span>
+                      <span style="color:var(--text-muted);" th:text="'(' + ${ag.vehicleType} + ')'"></span>
+                      <span th:if="${!ag.available}" style="color:var(--danger);font-weight:600;"
+                            th:text="'— ' + ${ag.workStatus} + ' (Not Available)'"></span>
+                      <span th:if="${ag.available}" style="color:var(--success);">— Available</span>
+                    </div>
+                    <div th:if="${#lists.isEmpty(allAgents)}" class="text-muted">No drivers registered.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group" id="deliveryAddrGroup" style="display:none;">
+                <label class="form-label">Delivery Address *</label>
+                <input type="text" name="deliveryAddress" class="form-control"
+                       placeholder="Full delivery address"/>
+              </div>
+
+              <div class="alert alert-info" id="costEstimateBox" style="display:none;">
+                💰 Estimated cost: <span id="costEstimate"></span>
+              </div>
+
+              <div class="d-flex gap-2" style="margin-top:8px;">
+                <button type="submit" class="btn btn-primary btn-lg">📋 Create Rental</button>
+                <a th:href="@{/rentals}" class="btn btn-secondary btn-lg">Cancel</a>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="card">
+            <div class="card-header"><h3>📜 Rental Rules</h3></div>
+            <div class="card-body" style="font-size:13px;color:var(--text-muted);display:flex;flex-direction:column;gap:8px;">
+              <div>✅ End date must be <strong>after</strong> start date</div>
+              <div>✅ Start date cannot be in the past</div>
+              <div>✅ No cash — only <strong>GCash</strong> or <strong>Bank Transfer</strong></div>
+              <div>✅ Payment must be made <strong>before</strong> rental start date</div>
+              <div>✅ Payment is required before manager approval</div>
+              <div>✅ Customer cancellation requires ≥2 days before start</div>
+              <div>✅ Extensions require manager approval</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>🔄 Rental Flow</h3></div>
+            <div class="card-body" style="font-size:12px;color:var(--text-muted);">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <div>1️⃣ <strong>PENDING</strong> — Rental created</div>
+                <div>2️⃣ <strong>AWAITING_APPROVAL</strong> — After payment</div>
+                <div>3️⃣ <strong>APPROVED</strong> — Manager approves</div>
+                <div>4️⃣ <strong>ACTIVE</strong> — Equipment in use</div>
+                <div>5️⃣ <strong>RETURNED</strong> — Job completed</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script>
+// Fix cost estimator box reference
+const estimateBox = document.getElementById('costEstimateBox');
+const orig = window.updateCostEstimate;
+document.querySelectorAll('#itemId,#startDate,#endDate,#quantity,#needsDelivery').forEach(el => {
+  el.addEventListener('change', () => {
+    if (estimateBox) estimateBox.style.display = 'none';
+    setTimeout(() => {
+      const cd = document.getElementById('costEstimate');
+      if (cd && cd.innerHTML) estimateBox.style.display = 'flex';
+    }, 50);
+  });
+});
+
+// Show operator/agent availability panels when checkbox is ticked
+document.getElementById('needsOperator').addEventListener('change', function() {
+  document.getElementById('operatorInfo').style.display = this.checked ? 'block' : 'none';
+});
+document.getElementById('needsDelivery').addEventListener('change', function() {
+  document.getElementById('agentInfo').style.display = this.checked ? 'block' : 'none';
+  const addr = document.getElementById('deliveryAddrGroup');
+  if (addr) addr.style.display = this.checked ? 'block' : 'none';
+});
+</script>
+</body>
+</html>

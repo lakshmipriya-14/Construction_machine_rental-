@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Buy Tool')}"></head>
+<body>
+<div id="overlay" class="overlay"></div>
+<div class="d-flex">
+  <div th:replace="~{fragments/layout :: sidebar('shop')}"></div>
+  <div class="main-wrapper">
+    <div th:replace="~{fragments/layout :: topbar('Buy Tool', 'Place your order')}"></div>
+    <div class="page-content">
+
+      <div class="alert alert-error" th:if="${error}" th:text="${error}" data-autohide="true"></div>
+
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1 th:text="'Buy: ' + ${item.name}">Buy Tool</h1>
+        </div>
+        <a th:href="@{/shop}" class="btn btn-secondary">← Back to Shop</a>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;">
+
+        <!-- Order form -->
+        <div class="card">
+          <div class="card-header"><h3>📋 Order Details</h3></div>
+          <div class="card-body">
+            <form th:action="@{/shop/{id}/buy(id=${item.id})}" method="post">
+
+              <div class="form-group">
+                <label class="form-label">Quantity *</label>
+                <input type="number" name="quantity" class="form-control"
+                       min="1" th:max="${item.availableQty}" value="1" required
+                       oninput="updateTotal(this.value)"/>
+                <small class="text-muted"
+                       th:text="${item.availableQty} + ' units in stock'"></small>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Delivery Address *</label>
+                <input type="text" name="deliveryAddress" class="form-control"
+                       th:value="${currentUser.address}"
+                       placeholder="Full delivery address" required/>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Notes <small class="text-muted">(optional)</small></label>
+                <input type="text" name="notes" class="form-control"
+                       placeholder="Any special instructions?"/>
+              </div>
+
+              <!-- Payment -->
+              <div style="background:var(--bg-secondary);border-radius:8px;padding:16px;margin:16px 0;">
+                <div style="font-weight:600;margin-bottom:12px;">💳 Payment Details</div>
+
+                <div class="form-group" style="margin-bottom:12px;">
+                  <label class="form-label">Payment Method *</label>
+                  <select name="paymentMethod" class="form-control" required onchange="toggleRef(this.value)">
+                    <option value="">Select method...</option>
+                    <option value="CASH">💵 Cash (on delivery)</option>
+                    <option value="GCASH">📱 GCash</option>
+                    <option value="BANK_TRANSFER">🏦 Bank Transfer</option>
+                  </select>
+                </div>
+
+                <div class="form-group" id="refGroup" style="display:none;margin-bottom:12px;">
+                  <label class="form-label">Reference / Transaction No. *</label>
+                  <input type="text" name="referenceNo" id="referenceNo" class="form-control"
+                         placeholder="e.g. GCash transaction ID"/>
+                </div>
+
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Payment Date *</label>
+                  <input type="date" name="paymentDate" class="form-control" required
+                         th:value="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}"/>
+                </div>
+              </div>
+
+              <!-- Order summary -->
+              <div style="background:var(--bg-secondary);border-radius:8px;padding:16px;margin:16px 0;">
+                <div style="font-weight:600;margin-bottom:10px;">Order Summary</div>
+                <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px;">
+                  <span>Unit Price</span>
+                  <span th:text="'₱' + ${#numbers.formatDecimal(item.salePrice,0,'COMMA',0,'POINT')}"></span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px;">
+                  <span>Quantity</span>
+                  <span id="qty-display">1</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-weight:600;font-size:16px;border-top:1px solid var(--border);padding-top:8px;margin-top:8px;">
+                  <span>Total</span>
+                  <span id="total-display" class="price-tag"
+                        th:text="'₱' + ${#numbers.formatDecimal(item.salePrice,0,'COMMA',0,'POINT')}"></span>
+                </div>
+              </div>
+
+              <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+                ℹ️ For GCash/Bank Transfer, enter your transaction reference number. For Cash, pay on delivery.
+              </p>
+
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">🛒 Place &amp; Pay</button>
+                <a th:href="@{/shop}" class="btn btn-secondary btn-lg">Cancel</a>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Tool info card -->
+        <div class="card">
+          <div th:if="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}"
+               style="border-radius:10px 10px 0 0;overflow:hidden;">
+            <img th:src="${item.imageUrl}" th:alt="${item.name}"
+                 style="width:100%;max-height:200px;object-fit:cover;display:block;"/>
+          </div>
+          <div style="padding:16px;">
+            <div style="font-weight:600;font-size:16px;margin-bottom:4px;" th:text="${item.name}"></div>
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;" th:text="${item.description}"></div>
+            <div style="display:flex;justify-content:space-between;font-size:14px;">
+              <span>Price per unit</span>
+              <span class="price-tag"
+                    th:text="'₱' + ${#numbers.formatDecimal(item.salePrice,0,'COMMA',0,'POINT')}"></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:14px;margin-top:6px;">
+              <span>Available stock</span>
+              <span th:text="${item.availableQty} + ' units'"></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script th:inline="javascript">
+  var unitPrice = /*[[${item.salePrice}]]*/ 0;
+  function updateTotal(qty) {
+    var q = parseInt(qty) || 1;
+    document.getElementById('qty-display').textContent = q;
+    var total = (unitPrice * q).toLocaleString('en-PH', {minimumFractionDigits:0, maximumFractionDigits:0});
+    document.getElementById('total-display').textContent = '₱' + total;
+  }
+  function toggleRef(method) {
+    var refGroup = document.getElementById('refGroup');
+    var refInput = document.getElementById('referenceNo');
+    if (method === 'GCASH' || method === 'BANK_TRANSFER') {
+      refGroup.style.display = 'block';
+      refInput.required = true;
+    } else {
+      refGroup.style.display = 'none';
+      refInput.required = false;
+      refInput.value = '';
+    }
+  }
+</script>
+</body>
+</html>

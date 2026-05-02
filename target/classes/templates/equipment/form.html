@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Equipment Form')}"></head>
+<body>
+<div id="overlay" class="overlay"></div>
+<div class="d-flex">
+  <div th:replace="~{fragments/layout :: sidebar('equipment')}"></div>
+  <div class="main-wrapper">
+    <div th:replace="~{fragments/layout :: topbar(${item.id == null ? 'Add Equipment' : 'Edit Equipment'}, 'Manage your inventory')}"></div>
+    <div class="page-content">
+
+      <div class="alert alert-error" th:if="${error}" th:text="${error}" data-autohide="true"></div>
+
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1 th:text="${item.id == null ? 'Add New Equipment' : 'Edit: ' + item.name}">Equipment</h1>
+        </div>
+        <a th:href="@{/equipment}" class="btn btn-secondary">← Back to List</a>
+      </div>
+
+      <div class="card" style="max-width:780px;">
+        <div class="card-body">
+          <form th:action="${item.id == null ? '/equipment/new' : '/equipment/' + item.id + '/edit'}" method="post" enctype="multipart/form-data">
+
+            <div class="form-grid">
+              <div class="form-group form-full">
+                <label class="form-label">Equipment Name *</label>
+                <input type="text" name="name" class="form-control" th:value="${item.name}"
+                       placeholder="e.g. Bulldozer D6" required/>
+              </div>
+
+              <!-- Only show category/type for new items -->
+              <div class="form-group" th:if="${item.id == null}">
+                <label class="form-label">Category *</label>
+                <select name="category" class="form-control" required>
+                  <option value="">Select Category</option>
+                  <option value="MACHINE">🏗️ Machine</option>
+                  <option value="TOOL">🔧 Tool</option>
+                </select>
+              </div>
+              <div class="form-group" th:if="${item.id == null}">
+                <label class="form-label">Type *</label>
+                <input type="text" name="type" class="form-control"
+                       placeholder="e.g. BULLDOZER, EXCAVATOR, MIXER" required/>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Daily Rate (PHP) *</label>
+                <input type="number" name="dailyRate" class="form-control" step="0.01" min="0"
+                       th:value="${item.dailyRate}" required/>
+              </div>
+
+              <div class="form-group" th:if="${item.id == null}">
+                <label class="form-label">Total Quantity *</label>
+                <input type="number" name="totalQty" class="form-control" min="1"
+                       th:value="${item.totalQty != 0 ? item.totalQty : ''}" required/>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Delivery Fee (PHP)</label>
+                <input type="number" name="deliveryFee" class="form-control" step="0.01" min="0"
+                       th:value="${item.deliveryFee}"/>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Sale Price (PHP)</label>
+                <input type="number" name="salePrice" class="form-control" step="0.01" min="0"
+                       th:value="${item.salePrice}" id="salePriceField"/>
+              </div>
+
+              <div class="form-group form-full">
+                <label class="form-label">Description</label>
+                <input type="text" name="description" class="form-control"
+                       th:value="${item.description}" placeholder="Short description of the equipment"/>
+              </div>
+
+              <div class="form-group form-full">
+                <label class="form-label">🖼️ Equipment Image <small class="text-muted">(JPG, PNG — max 5MB)</small></label>
+                <!-- Show current image if editing -->
+                <div th:if="${item.id != null and item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}"
+                     style="margin-bottom:10px;">
+                  <img th:src="${item.imageUrl}" alt="Current image"
+                       style="max-height:120px;max-width:280px;border-radius:8px;border:1px solid var(--border);object-fit:cover;"/>
+                  <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">
+                    Current image — upload a new file below to replace it
+                  </div>
+                </div>
+                <input type="file" name="imageFile" class="form-control"
+                       accept="image/jpeg,image/png,image/webp,image/gif"
+                       id="imageFileInput" onchange="previewUpload(this)"/>
+                <div id="uploadPreview" style="margin-top:10px;display:none;">
+                  <img id="uploadPreviewImg" src="#" alt="Preview"
+                       style="max-height:120px;max-width:280px;border-radius:8px;border:1px solid var(--border);object-fit:cover;"/>
+                </div>
+              </div>
+            </div>
+
+            <!-- Checkboxes -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px;">
+              <label class="form-check">
+                <input type="checkbox" name="requiresOperator" id="requiresOperator" value="true"
+                       th:checked="${item.requiresOperator}"/>
+                <span>👷 Requires Operator</span>
+              </label>
+              <label class="form-check">
+                <input type="checkbox" name="deliverable" id="deliverable" value="true"
+                       th:checked="${item.deliverable}"/>
+                <span>🚛 Deliverable</span>
+              </label>
+              <label class="form-check">
+                <input type="checkbox" name="forSale" id="forSale" value="true"
+                       th:checked="${item.forSale}"/>
+                <span>🏷️ For Sale (Tools only)</span>
+              </label>
+              <label class="form-check" th:if="${item.id != null}">
+                <input type="checkbox" name="active" value="true"
+                       th:checked="${item.active}"/>
+                <span>✅ Active</span>
+              </label>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary btn-lg"
+                      th:text="${item.id == null ? '➕ Add Equipment' : '💾 Save Changes'}">Save</button>
+              <a th:href="@{/equipment}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+          </form>
+
+          <!-- Stock update (edit mode only) -->
+          <div th:if="${item.id != null}" style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);">
+            <h3 style="font-size:15px;font-weight:600;margin-bottom:12px;">📦 Update Stock Quantity</h3>
+            <form th:action="@{/equipment/{id}/stock(id=${item.id})}" method="post" class="d-flex gap-2" style="align-items:flex-end;flex-wrap:wrap;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">New Total Qty</label>
+                <input type="number" name="totalQty" class="form-control" style="width:130px;"
+                       th:value="${item.totalQty}" min="0" required/>
+              </div>
+              <button type="submit" class="btn btn-primary">Update Stock</button>
+              <small class="text-muted" style="align-self:center;">
+                Currently rented out: <strong th:text="${item.totalQty - item.availableQty}"></strong>
+              </small>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script>
+function previewUpload(input) {
+  var preview = document.getElementById('uploadPreview');
+  var img = document.getElementById('uploadPreviewImg');
+  if (input.files && input.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      img.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(input.files[0]);
+  } else {
+    preview.style.display = 'none';
+  }
+}
+</script>
+</body>
+</html>

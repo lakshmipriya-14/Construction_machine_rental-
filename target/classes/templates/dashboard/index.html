@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body>
+<div id="overlay" class="overlay"></div>
+<div class="d-flex">
+  <div th:replace="~{fragments/layout :: sidebar('dashboard')}"></div>
+  <div class="main-wrapper">
+    <div th:replace="~{fragments/layout :: topbar('Dashboard', 'Welcome back, ' + ${currentUser.fullName})}"></div>
+    <div class="page-content">
+
+      <!-- Alerts -->
+      <div class="alert alert-warning" th:if="${pendingApprovals > 0}" data-autohide="true">
+        <span>⏳</span>
+        <span th:text="${pendingApprovals} + ' rental(s) are awaiting your approval.'"></span>
+      </div>
+
+      <!-- Stats Grid — focused -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon orange">🏗️</div>
+          <div class="stat-info">
+            <div class="stat-value" th:text="${totalEquipment}">0</div>
+            <div class="stat-label">Equipment Listed</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">📋</div>
+          <div class="stat-info">
+            <div class="stat-value" th:text="${activeRentals}">0</div>
+            <div class="stat-label">Active Rentals</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">⏳</div>
+          <div class="stat-info">
+            <div class="stat-value" th:text="${pendingApprovals}">0</div>
+            <div class="stat-label">Pending Approvals</div>
+          </div>
+        </div>
+        <div class="stat-card" th:if="${currentUser.staff}">
+          <div class="stat-icon green">💰</div>
+          <div class="stat-info">
+            <div class="stat-value" style="font-size:16px;"
+                 th:text="'₱' + ${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')}">₱0</div>
+            <div class="stat-label">Total Revenue</div>
+          </div>
+        </div>
+        <div class="stat-card" th:if="${currentUser.staff}">
+          <div class="stat-icon blue">👷</div>
+          <div class="stat-info">
+            <div class="stat-value" th:text="${availableOperators} + '/' + ${totalOperators}">0</div>
+            <div class="stat-label">Operators Available</div>
+          </div>
+        </div>
+        <div class="stat-card" th:if="${currentUser.staff}">
+          <div class="stat-icon orange">👥</div>
+          <div class="stat-info">
+            <div class="stat-value" th:text="${totalCustomers}">0</div>
+            <div class="stat-label">Customers</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two column: Recent Rentals + Low Stock -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+
+        <!-- Recent Rentals -->
+        <div class="card">
+          <div class="card-header">
+            <h3>📋 Recent Rentals</h3>
+            <a th:href="@{/rentals}" class="btn btn-secondary btn-sm">View All</a>
+          </div>
+          <div th:if="${recentRentals.empty}" class="empty-state" style="padding:30px;">
+            <div class="empty-icon">📭</div>
+            <p>No rentals yet</p>
+          </div>
+          <div class="table-wrapper" th:if="${!recentRentals.empty}">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th><th>Item</th><th>Status</th><th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="r : ${recentRentals}">
+                  <td><a th:href="@{/rentals/{id}(id=${r.id})}" class="text-primary fw-bold"
+                         th:text="'#' + ${r.id}"></a></td>
+                  <td th:text="${r.itemId}">—</td>
+                  <td><span class="badge" th:classappend="${r.statusBadgeClass}" th:text="${r.status}"></span></td>
+                  <td class="text-muted fs-sm" th:text="${r.startDate}"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Low Stock / Quick Actions -->
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          <!-- Low Stock -->
+          <div class="card">
+            <div class="card-header">
+              <h3>⚠️ Low Availability</h3>
+              <a th:href="@{/equipment}" class="btn btn-secondary btn-sm">All Equipment</a>
+            </div>
+            <div th:if="${lowStockItems.empty}" style="padding:20px;color:var(--text-muted);font-size:13px;">
+              All equipment has good availability ✅
+            </div>
+            <div class="table-wrapper" th:if="${!lowStockItems.empty}">
+              <table>
+                <thead><tr><th>Equipment</th><th>Available</th><th>Total</th></tr></thead>
+                <tbody>
+                  <tr th:each="item : ${lowStockItems}">
+                    <td th:text="${item.name}" class="fw-bold"></td>
+                    <td>
+                      <span class="badge badge-danger" th:if="${item.availableQty == 0}">FULLY RENTED</span>
+                      <span class="badge badge-warning" th:if="${item.availableQty > 0}"
+                            th:text="${item.availableQty} + ' left'"></span>
+                    </td>
+                    <td class="text-muted" th:text="${item.totalQty}"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card">
+            <div class="card-header"><h3>⚡ Quick Actions</h3></div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+              <a th:href="@{/rentals/new}" class="btn btn-primary">
+                ➕ New Rental
+              </a>
+              <a th:href="@{/rentals?status=AWAITING_APPROVAL}" class="btn btn-warning"
+                 th:if="${currentUser.staff}">
+                ⏳ Review Pending Approvals
+              </a>
+              <a th:href="@{/equipment/new}" class="btn btn-secondary"
+                 th:if="${currentUser.staff}">
+                🏗️ Add Equipment
+              </a>
+              <a th:href="@{/users/new}" class="btn btn-secondary"
+                 th:if="${currentUser.staff}">
+                👤 Add Customer
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </div><!-- /main-wrapper -->
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

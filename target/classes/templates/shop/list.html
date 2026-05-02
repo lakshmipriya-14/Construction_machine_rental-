@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Tool Shop')}"></head>
+<body>
+<div id="overlay" class="overlay"></div>
+<div class="d-flex">
+  <div th:replace="~{fragments/layout :: sidebar('shop')}"></div>
+  <div class="main-wrapper">
+    <div th:replace="~{fragments/layout :: topbar('Tool Shop', 'Buy tools for your construction needs')}"></div>
+    <div class="page-content">
+
+      <div class="alert alert-success" th:if="${success}" th:text="${success}" data-autohide="true"></div>
+      <div class="alert alert-error"   th:if="${error}"   th:text="${error}"   data-autohide="true"></div>
+
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1>🛒 Tool Shop</h1>
+          <p th:text="${tools.size()} + ' tools available for purchase'"></p>
+        </div>
+        <a th:href="@{/purchases}" class="btn btn-secondary">📦 My Orders</a>
+      </div>
+
+      <!-- Empty state -->
+      <div class="card" th:if="${tools.empty}">
+        <div class="empty-state">
+          <div class="empty-icon">🔧</div>
+          <h3>No Tools for Sale</h3>
+          <p>Check back later — tools will appear here when marked for sale.</p>
+        </div>
+      </div>
+
+      <!-- Tool grid -->
+      <div th:if="${!tools.empty}"
+           style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;">
+        <div th:each="tool : ${tools}"
+             style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;">
+
+          <!-- Image -->
+          <div style="height:180px;overflow:hidden;background:var(--bg-secondary);display:flex;align-items:center;justify-content:center;">
+            <img th:if="${tool.imageUrl != null and !#strings.isEmpty(tool.imageUrl)}"
+                 th:src="${tool.imageUrl}" th:alt="${tool.name}"
+                 style="width:100%;height:100%;object-fit:cover;"/>
+            <span th:if="${tool.imageUrl == null or #strings.isEmpty(tool.imageUrl)}"
+                  style="font-size:64px;">🔧</span>
+          </div>
+
+          <!-- Info -->
+          <div style="padding:16px;flex:1;display:flex;flex-direction:column;gap:8px;">
+            <div style="font-weight:600;font-size:16px;" th:text="${tool.name}"></div>
+            <div style="font-size:13px;color:var(--text-muted);" th:text="${tool.description}"></div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+              <span class="price-tag"
+                    th:text="'₱' + ${#numbers.formatDecimal(tool.salePrice,0,'COMMA',0,'POINT')}"></span>
+              <span style="font-size:12px;color:var(--text-muted);"
+                    th:text="${tool.availableQty} + ' in stock'"></span>
+            </div>
+
+            <a th:href="@{/shop/{id}/buy(id=${tool.id})}"
+               class="btn btn-primary" style="margin-top:8px;text-align:center;">
+              🛒 Buy Now
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

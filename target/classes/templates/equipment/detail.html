@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Equipment Detail')}"></head>
+<body>
+<div id="overlay" class="overlay"></div>
+<div class="d-flex">
+  <div th:replace="~{fragments/layout :: sidebar('equipment')}"></div>
+  <div class="main-wrapper">
+    <div th:replace="~{fragments/layout :: topbar('Equipment Detail', 'View equipment information')}"></div>
+    <div class="page-content">
+
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1 th:text="${item.name}">Equipment</h1>
+          <div style="margin-top:6px;">
+            <span class="badge badge-machine" th:if="${item.machine}">MACHINE</span>
+            <span class="badge badge-tool"    th:if="${!item.machine}">TOOL</span>
+            <span class="badge badge-success"   th:if="${item.active && item.availableQty > 0}" style="margin-left:6px;">Available</span>
+            <span class="badge badge-warning"   th:if="${item.active && item.availableQty == 0}" style="margin-left:6px;">Fully Rented</span>
+            <span class="badge badge-secondary" th:if="${!item.active}" style="margin-left:6px;">Inactive</span>
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <a th:href="@{/equipment/{id}/edit(id=${item.id})}" class="btn btn-primary" th:if="${currentUser.staff}">✏️ Edit</a>
+          <a th:href="@{/equipment}" class="btn btn-secondary">← Back</a>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start;">
+        <div>
+        <!-- Equipment Image -->
+        <div th:if="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}"
+             style="margin-bottom:20px;border-radius:12px;overflow:hidden;border:1px solid var(--border);background:var(--surface);">
+          <img th:src="${item.imageUrl}" th:alt="${item.name}"
+               style="width:100%;max-height:280px;object-fit:cover;display:block;"/>
+        </div>
+        <div th:if="${item.imageUrl == null or #strings.isEmpty(item.imageUrl)}"
+             style="margin-bottom:20px;border-radius:12px;border:1px solid var(--border);background:var(--surface);height:180px;display:flex;align-items:center;justify-content:center;font-size:64px;">
+          <span th:text="${item.machine} ? '🏗️' : '🔧'"></span>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>📋 Equipment Details</h3></div>
+          <div class="card-body">
+            <div class="detail-grid">
+              <div class="detail-row">
+                <span class="detail-label">Name</span>
+                <span class="detail-value fw-bold" th:text="${item.name}"></span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Category / Type</span>
+                <span class="detail-value" th:text="${item.category} + ' / ' + ${item.type}"></span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Daily Rate</span>
+                <span class="detail-value price-tag"
+                      th:text="'₱' + ${#numbers.formatDecimal(item.dailyRate,0,'COMMA',0,'POINT')}"></span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Delivery Fee</span>
+                <span class="detail-value"
+                      th:text="${item.deliverable ? '₱' + #numbers.formatDecimal(item.deliveryFee,0,'COMMA',0,'POINT') : 'N/A'}"></span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Total Quantity</span>
+                <span class="detail-value" th:text="${item.totalQty}"></span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Available Now</span>
+                <span class="detail-value fw-bold text-primary" th:text="${item.availableQty}"></span>
+              </div>
+              <div class="detail-row" th:if="${item.forSale}">
+                <span class="detail-label">Sale Price</span>
+                <span class="detail-value"
+                      th:text="'₱' + ${#numbers.formatDecimal(item.salePrice,0,'COMMA',0,'POINT')}"></span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Description</span>
+                <span class="detail-value" th:text="${item.description}"></span>
+              </div>
+            </div>
+            <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+              <span class="badge badge-info"      th:if="${item.requiresOperator}">👷 Requires Operator</span>
+              <span class="badge badge-primary"   th:if="${item.deliverable}">🚛 Deliverable</span>
+              <span class="badge badge-warning"   th:if="${item.forSale}">🏷️ For Sale</span>
+            </div>
+          </div>
+        </div>
+
+        </div> <!-- end first column wrapper -->
+
+        <div class="card">
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+            <a th:href="@{/rentals/new}" class="btn btn-primary">📋 Rent This Equipment</a>
+            <a th:href="@{/equipment/{id}/edit(id=${item.id})}" class="btn btn-secondary" th:if="${currentUser.staff}">✏️ Edit Details</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

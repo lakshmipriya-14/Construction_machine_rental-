@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Payments')}"></head>
+<body>
+<div id="overlay" class="overlay"></div>
+<div class="d-flex">
+  <div th:replace="~{fragments/layout :: sidebar('payments')}"></div>
+  <div class="main-wrapper">
+    <div th:replace="~{fragments/layout :: topbar('Payments', 'Revenue and payment tracking')}"></div>
+    <div class="page-content">
+
+      <div class="alert alert-success" th:if="${success}" th:text="${success}" data-autohide="true"></div>
+      <div class="alert alert-error"   th:if="${error}"   th:text="${error}"   data-autohide="true"></div>
+
+      <!-- Summary stats -->
+      <div class="stats-grid" style="margin-bottom:20px;">
+        <div class="stat-card">
+          <div class="stat-icon green">💰</div>
+          <div class="stat-info">
+            <div class="stat-value" style="font-size:18px;"
+                 th:text="'₱' + ${#numbers.formatDecimal(totalRevenue,0,'COMMA',0,'POINT')}"></div>
+            <div class="stat-label">Rental Revenue</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">🛒</div>
+          <div class="stat-info">
+            <div class="stat-value" style="font-size:18px;"
+                 th:text="'₱' + ${#numbers.formatDecimal(totalSales,0,'COMMA',0,'POINT')}"></div>
+            <div class="stat-label">Tool Sales</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">⏳</div>
+          <div class="stat-info">
+            <div class="stat-value" th:text="${pendingCount}"></div>
+            <div class="stat-label">Pending Payments</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs: Rental | For Sale -->
+      <div style="display:flex;gap:0;margin-bottom:0;border-bottom:2px solid var(--border);">
+        <a href="?type=rental" style="padding:10px 24px;font-weight:600;font-size:14px;text-decoration:none;border-radius:8px 8px 0 0;"
+           th:style="${selectedType=='rental'} ? 'background:var(--primary);color:#fff;' : 'color:var(--text-muted);'">
+          📋 Rental Payments
+        </a>
+        <a href="?type=purchase" style="padding:10px 24px;font-weight:600;font-size:14px;text-decoration:none;border-radius:8px 8px 0 0;"
+           th:style="${selectedType=='purchase'} ? 'background:var(--primary);color:#fff;' : 'color:var(--text-muted);'">
+          🛒 Tool Purchases
+        </a>
+      </div>
+
+      <!-- ── RENTAL PAYMENTS TAB ── -->
+      <div th:if="${selectedType != 'purchase'}" class="card" style="border-radius:0 8px 8px 8px;margin-top:0;">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <h3>📋 Rental Payments</h3>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <form method="get" style="display:flex;gap:8px;align-items:center;">
+              <input type="hidden" name="type" value="rental"/>
+              <select name="status" class="form-control" style="width:auto;" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                <option value="PENDING"  th:selected="${selectedStatus=='PENDING'}">Pending</option>
+                <option value="PAID"     th:selected="${selectedStatus=='PAID'}">Paid</option>
+                <option value="REFUNDED" th:selected="${selectedStatus=='REFUNDED'}">Refunded</option>
+              </select>
+            </form>
+            <a th:href="@{/payments/export/rental}" class="btn btn-secondary" style="font-size:13px;">
+              ⬇️ Download CSV
+            </a>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <div class="empty-state" th:if="${payments.empty}" style="padding:32px;">
+            <p>No rental payments found.</p>
+          </div>
+          <table class="table" th:if="${!payments.empty}">
+            <thead>
+              <tr>
+                <th>Receipt</th><th>Rental</th><th>Customer</th><th>Equipment</th>
+                <th>Base</th><th>Op Fee</th><th>Del Fee</th><th>Total</th>
+                <th>Method</th><th>Ref</th><th>Date</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="p : ${payments}">
+                <td th:text="'RCP-'+${p.id}"></td>
+                <td th:text="'#'+${p.rentalId}"></td>
+                <td th:text="${p.customerName}"></td>
+                <td th:text="${p.itemName}"></td>
+                <td th:text="'₱'+${#numbers.formatDecimal(p.baseAmount,0,'COMMA',0,'POINT')}"></td>
+                <td th:text="'₱'+${#numbers.formatDecimal(p.operatorFee,0,'COMMA',0,'POINT')}"></td>
+                <td th:text="'₱'+${#numbers.formatDecimal(p.deliveryFee,0,'COMMA',0,'POINT')}"></td>
+                <td class="fw-bold" th:text="'₱'+${#numbers.formatDecimal(p.totalAmount,0,'COMMA',0,'POINT')}"></td>
+                <td th:text="${p.method}"></td>
+                <td th:text="${p.referenceNo}"></td>
+                <td th:text="${p.paymentDate}"></td>
+                <td><span class="badge" th:classappend="${p.statusBadgeClass}" th:text="${p.status}"></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── PURCHASE PAYMENTS TAB ── -->
+      <div th:if="${selectedType == 'purchase'}" class="card" style="border-radius:0 8px 8px 8px;margin-top:0;">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <h3>🛒 Tool Purchase Payments</h3>
+          <a th:href="@{/payments/export/purchase}" class="btn btn-secondary" style="font-size:13px;">
+            ⬇️ Download CSV
+          </a>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <div class="empty-state" th:if="${purchases.empty}" style="padding:32px;">
+            <p>No purchase orders found.</p>
+          </div>
+          <table class="table" th:if="${!purchases.empty}">
+            <thead>
+              <tr>
+                <th>Order</th><th>Customer</th><th>Tool</th><th>Qty</th>
+                <th>Unit Price</th><th>Total</th><th>Method</th><th>Ref</th><th>Date</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="p : ${purchases}">
+                <td th:text="'ORD-'+${p.id}"></td>
+                <td th:text="${p.customerName}"></td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <img th:if="${p.itemImageUrl != null and !#strings.isEmpty(p.itemImageUrl)}"
+                         th:src="${p.itemImageUrl}" style="width:32px;height:32px;object-fit:cover;border-radius:4px;"/>
+                    <span th:text="${p.itemName}"></span>
+                  </div>
+                </td>
+                <td th:text="${p.quantity}"></td>
+                <td th:text="'₱'+${#numbers.formatDecimal(p.unitPrice,0,'COMMA',0,'POINT')}"></td>
+                <td class="fw-bold" th:text="'₱'+${#numbers.formatDecimal(p.totalAmount,0,'COMMA',0,'POINT')}"></td>
+                <td th:text="${p.paymentMethod}"></td>
+                <td th:text="${p.referenceNo}"></td>
+                <td th:text="${p.paymentDate}"></td>
+                <td><span class="badge" th:classappend="${p.statusBadgeClass}" th:text="${p.status}"></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Rentals')}"></head>
+<body>
+<div id="overlay" class="overlay"></div>
+<div class="d-flex">
+  <div th:replace="~{fragments/layout :: sidebar('rentals')}"></div>
+  <div class="main-wrapper">
+    <div th:replace="~{fragments/layout :: topbar('Rentals', 'Track all equipment rental transactions')}"></div>
+    <div class="page-content">
+
+      <div class="alert alert-success" th:if="${success}" th:text="${success}" data-autohide="true"></div>
+      <div class="alert alert-error"   th:if="${error}"   th:text="${error}"   data-autohide="true"></div>
+      <div class="alert alert-warning" th:if="${pendingExtensions > 0}">
+        ⏳ <span th:text="${pendingExtensions} + ' extension request(s) need your review.'"></span>
+      </div>
+
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1>Rentals</h1>
+          <p th:text="${rentals.size()} + ' rental(s) found'"></p>
+        </div>
+        <a th:href="@{/rentals/new}" class="btn btn-primary">➕ New Rental</a>
+      </div>
+
+      <!-- Status Filters -->
+      <div class="filters-bar">
+        <a th:href="@{/rentals}" class="filter-btn" th:classappend="${selectedStatus == null} ? 'active' : ''">All</a>
+        <a th:href="@{/rentals(status='PENDING')}"            class="filter-btn" th:classappend="${selectedStatus == 'PENDING'} ? 'active' : ''">Pending</a>
+        <a th:href="@{/rentals(status='AWAITING_APPROVAL')}"  class="filter-btn" th:classappend="${selectedStatus == 'AWAITING_APPROVAL'} ? 'active' : ''">Awaiting Approval</a>
+        <a th:href="@{/rentals(status='APPROVED')}"           class="filter-btn" th:classappend="${selectedStatus == 'APPROVED'} ? 'active' : ''">Approved</a>
+        <a th:href="@{/rentals(status='ACTIVE')}"             class="filter-btn" th:classappend="${selectedStatus == 'ACTIVE'} ? 'active' : ''">Active</a>
+        <a th:href="@{/rentals(status='RETURNED')}"           class="filter-btn" th:classappend="${selectedStatus == 'RETURNED'} ? 'active' : ''">Returned</a>
+        <a th:href="@{/rentals(status='CANCELLED')}"          class="filter-btn" th:classappend="${selectedStatus == 'CANCELLED'} ? 'active' : ''">Cancelled</a>
+      </div>
+
+      <div class="card">
+        <div th:if="${rentals.empty}" class="empty-state">
+          <div class="empty-icon">📭</div>
+          <h3>No Rentals Found</h3>
+          <p>Create a new rental to get started.</p>
+          <a th:href="@{/rentals/new}" class="btn btn-primary" style="margin-top:16px;">➕ New Rental</a>
+        </div>
+        <div class="table-wrapper" th:if="${!rentals.empty}">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Customer</th>
+                <th>Equipment</th>
+                <th>Qty</th>
+                <th>Period</th>
+                <th>Days</th>
+                <th>Amount</th>
+                <th>Services</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="r : ${rentals}">
+                <td>
+                  <a th:href="@{/rentals/{id}(id=${r.id})}" class="text-primary fw-bold"
+                     th:text="'#' + ${r.id}"></a>
+                  <div th:if="${r.extensionStatus == 'PENDING'}" style="margin-top:2px;">
+                    <span class="badge badge-warning" style="font-size:9px;">EXT PENDING</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="fw-bold" th:text="${r.customerName ?: 'Cust#' + r.customerId}"></div>
+                </td>
+                <td>
+                  <div th:text="${r.itemName ?: 'Item#' + r.itemId}"></div>
+                </td>
+                <td th:text="${r.quantity}"></td>
+                <td class="fs-sm">
+                  <div th:text="${r.startDate}"></div>
+                  <div class="text-muted">→ <span th:text="${r.endDate}"></span></div>
+                </td>
+                <td th:text="${r.days} + 'd'"></td>
+                <td>
+                  <div class="fw-bold text-primary"
+                       th:text="${r.totalAmount > 0 ? '₱' + #numbers.formatDecimal(r.totalAmount,0,'COMMA',0,'POINT') : '—'}"></div>
+                </td>
+                <td>
+                  <span title="Operator assigned" th:if="${r.needsOperator}">👷</span>
+                  <span title="Delivery needed"   th:if="${r.needsDelivery}">🚛</span>
+                </td>
+                <td>
+                  <span class="badge" th:classappend="${r.statusBadgeClass}" th:text="${r.status}"></span>
+                </td>
+                <td>
+                  <a th:href="@{/rentals/{id}(id=${r.id})}" class="btn btn-secondary btn-sm">View</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

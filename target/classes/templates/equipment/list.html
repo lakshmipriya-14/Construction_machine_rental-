@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Equipment')}"></head>
+<body>
+<div id="overlay" class="overlay"></div>
+<div class="d-flex">
+  <div th:replace="~{fragments/layout :: sidebar('equipment')}"></div>
+  <div class="main-wrapper">
+    <div th:replace="~{fragments/layout :: topbar('Equipment', 'Manage machines and tools')}"></div>
+    <div class="page-content">
+
+      <!-- Flash -->
+      <div class="alert alert-success" th:if="${success}" th:text="${success}" data-autohide="true"></div>
+      <div class="alert alert-error"   th:if="${error}"   th:text="${error}"   data-autohide="true"></div>
+
+      <!-- Header -->
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1>Equipment Inventory</h1>
+          <p th:text="${items.size()} + ' items found'"></p>
+        </div>
+        <div class="d-flex gap-2" th:if="${currentUser.staff}">
+          <a th:href="@{/equipment/new}" class="btn btn-primary">➕ Add Equipment</a>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters-bar">
+        <a th:href="@{/equipment}" class="filter-btn" th:classappend="${selectedCategory == null} ? 'active' : ''">All</a>
+        <a th:href="@{/equipment(category='MACHINE')}" class="filter-btn"
+           th:classappend="${selectedCategory == 'MACHINE'} ? 'active' : ''">🏗️ Machines</a>
+        <a th:href="@{/equipment(category='TOOL')}" class="filter-btn"
+           th:classappend="${selectedCategory == 'TOOL'} ? 'active' : ''">🔧 Tools</a>
+        <a th:href="@{/equipment(status='inactive')}" class="filter-btn"
+           th:classappend="${selectedStatus == 'inactive'} ? 'active' : ''">Inactive</a>
+      </div>
+
+      <!-- Table -->
+      <div class="card">
+        <div th:if="${items.empty}" class="empty-state">
+          <div class="empty-icon">🏗️</div>
+          <h3>No Equipment Found</h3>
+          <p>Add your first equipment item to get started.</p>
+        </div>
+        <div class="table-wrapper" th:if="${!items.empty}">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Daily Rate</th>
+                <th>Availability</th>
+                <th>Options</th>
+                <th>Status</th>
+                <th th:if="${currentUser.staff}">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="item : ${items}">
+                <td class="text-muted fs-sm" th:text="${item.id}"></td>
+                <td>
+                  <div class="d-flex" style="align-items:center;gap:10px;">
+                    <img th:if="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}"
+                         th:src="${item.imageUrl}" th:alt="${item.name}"
+                         style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0;"/>
+                    <span th:if="${item.imageUrl == null or #strings.isEmpty(item.imageUrl)}"
+                          style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:24px;background:var(--surface);border-radius:6px;border:1px solid var(--border);flex-shrink:0;"
+                          th:text="${item.machine} ? '🏗️' : '🔧'"></span>
+                    <div>
+                      <div class="fw-bold">
+                        <a th:href="@{/equipment/{id}(id=${item.id})}" th:text="${item.name}" style="color:inherit;text-decoration:none;"></a>
+                      </div>
+                      <div class="text-muted fs-xs" th:text="${item.description}"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge badge-machine" th:if="${item.machine}">MACHINE</span>
+                  <span class="badge badge-tool"    th:if="${!item.machine}">TOOL</span>
+                </td>
+                <td class="fs-sm" th:text="${item.type}"></td>
+                <td>
+                  <span class="price-tag" th:text="'₱' + ${#numbers.formatDecimal(item.dailyRate,0,'COMMA',0,'POINT')}"></span>
+                  <small class="text-muted">/day</small>
+                </td>
+                <td>
+                  <div class="fw-bold" th:text="${item.availableQty} + ' / ' + ${item.totalQty}"></div>
+                  <div class="text-muted fs-xs">units free</div>
+                </td>
+                <td>
+                  <span title="Requires Operator" th:if="${item.requiresOperator}" style="margin-right:4px;">👷</span>
+                  <span title="Deliverable"        th:if="${item.deliverable}"       style="margin-right:4px;">🚛</span>
+                  <span title="For Sale"           th:if="${item.forSale}">🏷️</span>
+                </td>
+                <td>
+                  <span class="badge badge-success"   th:if="${item.active && item.availableQty > 0}">Available</span>
+                  <span class="badge badge-warning"   th:if="${item.active && item.availableQty == 0}">Rented Out</span>
+                  <span class="badge badge-secondary" th:if="${!item.active}">Inactive</span>
+                </td>
+                <td th:if="${currentUser.staff}">
+                  <div class="d-flex gap-1">
+                    <a th:href="@{/equipment/{id}/edit(id=${item.id})}" class="btn btn-secondary btn-sm">Edit</a>
+                    <form th:action="@{/equipment/{id}/toggle(id=${item.id})}" method="post" style="display:inline;">
+                      <button type="submit" class="btn btn-sm"
+                              th:classappend="${item.active} ? 'btn-danger' : 'btn-success'"
+                              th:text="${item.active} ? 'Deactivate' : 'Activate'"
+                              th:data-confirm="${item.active} ? 'Deactivate this equipment?' : 'Activate this equipment?'"></button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

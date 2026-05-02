@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Edit User')}"></head>
+<body>
+<div id="overlay" class="overlay"></div>
+<div class="d-flex">
+  <div th:replace="~{fragments/layout :: sidebar('users')}"></div>
+  <div class="main-wrapper">
+    <div th:replace="~{fragments/layout :: topbar('Edit User', 'Update account details')}"></div>
+    <div class="page-content">
+      <div class="alert alert-success" th:if="${success}" th:text="${success}" data-autohide="true"></div>
+
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1 th:text="'Edit: ' + ${user.fullName}"></h1>
+        </div>
+        <a th:href="@{/users}" class="btn btn-secondary">← Back</a>
+      </div>
+
+      <div class="card" style="max-width:640px;">
+        <div class="card-body">
+          <form th:action="@{/users/{id}/edit(id=${user.id})}" method="post">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Full Name *</label>
+                <input type="text" name="fullName" class="form-control" th:value="${user.fullName}" required/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Role</label>
+                <input type="text" class="form-control" th:value="${user.role}" disabled/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control" th:value="${user.email}"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Contact Number</label>
+                <input type="text" name="contact" class="form-control" th:value="${user.contact}"/>
+              </div>
+              <div class="form-group form-full">
+                <label class="form-label">Address</label>
+                <input type="text" name="address" class="form-control" th:value="${user.address}"/>
+              </div>
+              <div class="form-group form-full">
+                <label class="form-label">New Password (leave blank to keep current)</label>
+                <input type="password" name="password" class="form-control" placeholder="New password..."/>
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary btn-lg">💾 Save Changes</button>
+              <a th:href="@{/users}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
